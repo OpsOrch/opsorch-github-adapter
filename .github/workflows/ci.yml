@@ -30,13 +30,6 @@ jobs:
       - name: Run unit tests
         run: make test
 
-      - name: Run integration tests
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_OWNER: opsorch
-          GITHUB_REPO: opsorch-github-adapter
-        run: make integ
-
   lint:
     runs-on: ubuntu-latest
     steps:

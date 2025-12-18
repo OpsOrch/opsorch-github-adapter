@@ -3,13 +3,13 @@ GOCACHE ?= $(PWD)/.gocache
 GOMODCACHE ?= $(PWD)/.gocache/mod
 CACHE_ENV = GOCACHE=$(GOCACHE) GOMODCACHE=$(GOMODCACHE)
 
-.PHONY: all clean test build plugins ticket-plugin deployment-plugin integ integ-ticket integ-deployment fmt deps lint
+.PHONY: all clean test build plugins ticket-plugin deployment-plugin team-plugin integ integ-ticket integ-deployment integ-team fmt deps lint
 
 # Default target
 all: build plugins
 
 # Build plugins
-plugins: ticket-plugin deployment-plugin
+plugins: ticket-plugin deployment-plugin team-plugin
 
 # Build ticket plugin
 ticket-plugin:
@@ -22,6 +22,12 @@ deployment-plugin:
 	@echo "Building GitHub deployment plugin..."
 	@mkdir -p bin
 	$(CACHE_ENV) $(GO) build -o bin/deploymentplugin ./cmd/deploymentplugin
+
+# Build team plugin
+team-plugin:
+	@echo "Building GitHub team plugin..."
+	@mkdir -p bin
+	$(CACHE_ENV) $(GO) build -o bin/teamplugin ./cmd/teamplugin
 
 # Build library (for in-process use)
 build:
@@ -69,8 +75,18 @@ integ-deployment:
 	fi
 	$(CACHE_ENV) $(GO) run ./integ/deployment.go
 
+# Run team integration tests
+integ-team:
+	@echo "Running GitHub team integration tests..."
+	@if [ -z "$(GITHUB_TOKEN)" ]; then \
+		echo "GITHUB_TOKEN environment variable is required for integration tests"; \
+		echo "Set GITHUB_ORG to override default organization"; \
+		exit 1; \
+	fi
+	$(CACHE_ENV) $(GO) run ./integ/team.go
+
 # Run all integration tests
-integ: integ-ticket integ-deployment
+integ: integ-ticket integ-deployment integ-team
 
 # Clean build artifacts
 clean:

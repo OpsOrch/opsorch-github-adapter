@@ -3,7 +3,7 @@
 [![Go Version](https://img.shields.io/github/go-mod/go-version/opsorch/opsorch-github-adapter)](https://github.com/opsorch/opsorch-github-adapter/blob/main/go.mod)
 [![License](https://img.shields.io/github/license/opsorch/opsorch-github-adapter)](https://github.com/opsorch/opsorch-github-adapter/blob/main/LICENSE)
 
-The OpsOrch GitHub Adapter provides integration with GitHub for both ticket management (GitHub Issues) and deployment tracking (GitHub Actions). This adapter implements multiple OpsOrch capabilities in a single package.
+The OpsOrch GitHub Adapter provides integration with GitHub for ticket management (GitHub Issues), deployment tracking (GitHub Actions), and team management (GitHub Teams). This adapter implements multiple OpsOrch capabilities in a single package.
 
 ## Features
 
@@ -21,6 +21,13 @@ The OpsOrch GitHub Adapter provides integration with GitHub for both ticket mana
 - Filter by status, branch, actor, and event
 - Automatic environment detection
 - Rich metadata including commit information and actor details
+
+### Team Provider (GitHub Teams)
+- Query GitHub Teams with filters
+- Get individual teams by ID or slug
+- Get team members with roles and detailed information
+- Support for nested team hierarchies
+- Automatic role normalization (maintainer → owner)
 
 ## Installation
 
@@ -45,6 +52,7 @@ make plugins
 This creates:
 - `bin/ticketplugin` - GitHub Issues plugin
 - `bin/deploymentplugin` - GitHub Actions plugin
+- `bin/teamplugin` - GitHub Teams plugin
 
 ## Configuration
 
@@ -89,14 +97,33 @@ OPSORCH_DEPLOYMENT_CONFIG='{
 }'
 ```
 
+### Team Provider (GitHub Teams)
+
+```bash
+# In-process provider
+OPSORCH_TEAM_PROVIDER=github
+OPSORCH_TEAM_CONFIG='{
+  "token": "ghp_your_github_token",
+  "organization": "your-org"
+}'
+
+# Plugin provider
+OPSORCH_TEAM_PLUGIN=/path/to/bin/teamplugin
+OPSORCH_TEAM_CONFIG='{
+  "token": "ghp_your_github_token",
+  "organization": "your-org"
+}'
+```
+
 ### Configuration Fields
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `token` | Yes | GitHub personal access token |
-| `owner` | Yes | Repository owner (user or organization) |
-| `repo` | Yes | Repository name |
-| `defaultState` | No | Default state for new issues (ticket provider only) |
+| Field | Required | Provider | Description |
+|-------|----------|----------|-------------|
+| `token` | Yes | All | GitHub personal access token |
+| `owner` | Yes | Ticket, Deployment | Repository owner (user or organization) |
+| `repo` | Yes | Ticket, Deployment | Repository name |
+| `organization` | Yes | Team | GitHub organization name |
+| `defaultState` | No | Ticket | Default state for new issues |
 
 ### GitHub Token Permissions
 
@@ -109,6 +136,10 @@ Your GitHub token needs the following scopes:
 **For Deployment Provider:**
 - `repo` (for private repositories) or `public_repo` (for public repositories)
 - `actions:read` (to read workflow runs)
+
+**For Team Provider:**
+- `read:org` (to read organization teams)
+- `read:user` (to read team member details)
 
 ## Usage Examples
 
@@ -165,6 +196,31 @@ curl -X POST http://localhost:8080/deployments/query \
 curl http://localhost:8080/deployments/1234567890
 ```
 
+### Query GitHub Teams
+
+```bash
+curl -X POST http://localhost:8080/teams/query \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "backend",
+    "tags": {
+      "privacy": "closed"
+    }
+  }'
+```
+
+### Get Team Details
+
+```bash
+curl http://localhost:8080/teams/engineering
+```
+
+### Get Team Members
+
+```bash
+curl http://localhost:8080/teams/engineering/members
+```
+
 ## Data Mapping
 
 ### GitHub Issues → OpsOrch Tickets
@@ -195,6 +251,29 @@ curl http://localhost:8080/deployments/1234567890
 | `html_url` | `url` | GitHub Actions run URL |
 | `actor` | `actor` | User who triggered the run |
 | `head_branch` | `fields.branch` | Source branch |
+
+### GitHub Teams → OpsOrch Teams
+
+| GitHub Field | OpsOrch Field | Notes |
+|--------------|---------------|-------|
+| `id` | `id` | Team ID as string (or slug if available) |
+| `name` | `name` | Team name |
+| `parent.id` | `parent` | Parent team ID (for nested teams) |
+| `privacy` | `tags.privacy` | Team privacy level |
+| `permission` | `tags.permission` | Team permission level |
+| `slug` | `metadata.slug` | Team slug |
+| `description` | `metadata.description` | Team description |
+| `members_count` | `metadata.members_count` | Number of team members |
+
+### GitHub Team Members → OpsOrch Team Members
+
+| GitHub Field | OpsOrch Field | Notes |
+|--------------|---------------|-------|
+| `login` | `id` | GitHub username |
+| `name` | `name` | User's display name |
+| `email` | `email` | User's email address |
+| `login` | `handle` | GitHub username |
+| `role` | `role` | Normalized role (maintainer → owner) |
 
 ## Environment Detection
 
@@ -268,11 +347,13 @@ make integ
 # Or run specific capability tests
 make integ-ticket      # Test GitHub Issues integration
 make integ-deployment  # Test GitHub Actions integration
+make integ-team        # Test GitHub Teams integration
 ```
 
 **What the tests do:**
 - **Ticket tests**: Query existing issues, create/update/close test issues, test filtering by status and labels
 - **Deployment tests**: Query workflow runs, test filtering by status/environment/branch, validate metadata extraction
+- **Team tests**: Query organization teams, get team details, retrieve team members with roles
 
 **Expected behavior:**
 - Tests create temporary issues that are automatically closed and cleaned up
@@ -285,6 +366,8 @@ make integ-deployment  # Test GitHub Actions integration
 - `repo` scope (for private repos) or `public_repo` (for public repos)
 - `issues:write` (to create/update test issues)
 - `actions:read` (to read workflow runs)
+- `read:org` (to read organization teams)
+- `read:user` (to read team member details)
 
 **Setting Up Test Data:**
 
