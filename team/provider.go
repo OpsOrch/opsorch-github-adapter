@@ -213,6 +213,7 @@ func (p *Provider) convertTeamToSchema(team *github.Team) schema.Team {
 	normalizedTeam := schema.Team{
 		ID:   id,
 		Name: team.GetName(),
+		URL:  team.GetHTMLURL(),
 		Tags: map[string]string{
 			"provider":   "github",
 			"privacy":    team.GetPrivacy(),

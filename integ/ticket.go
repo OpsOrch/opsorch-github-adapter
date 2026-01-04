@@ -75,8 +75,8 @@ func main() {
 		fmt.Printf("Found %d existing issues\n", len(issues))
 		for i, issue := range issues {
 			if i < 3 { // Show first 3 issues
-				fmt.Printf("  [%d] ID: %s, Title: %s, Status: %s\n",
-					i+1, issue.ID, issue.Title, issue.Status)
+				fmt.Printf("  [%d] ID: %s, Title: %s, Status: %s, URL: %s\n",
+					i+1, issue.ID, issue.Title, issue.Status, issue.URL)
 			}
 		}
 		testResult("Query existing issues", nil)

@@ -83,8 +83,8 @@ func main() {
 				if name, ok := dep.Fields["workflow_name"].(string); ok {
 					workflowName = name
 				}
-				fmt.Printf("  [%d] ID: %s, Workflow: %s, Status: %s, Environment: %s\n",
-					i+1, dep.ID, workflowName, dep.Status, dep.Environment)
+				fmt.Printf("  [%d] ID: %s, Workflow: %s, Status: %s, Environment: %s, URL: %s\n",
+					i+1, dep.ID, workflowName, dep.Status, dep.Environment, dep.URL)
 			}
 		}
 		testResult("Query existing deployments", nil)
