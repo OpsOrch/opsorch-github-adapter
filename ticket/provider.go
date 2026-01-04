@@ -219,6 +219,7 @@ func (p *Provider) convertIssueToTicket(issue *github.Issue) schema.Ticket {
 		Title:       issue.GetTitle(),
 		Description: issue.GetBody(),
 		Status:      p.normalizeStatus(issue.GetState()),
+		URL:         issue.GetHTMLURL(),
 		CreatedAt:   issue.GetCreatedAt().Time,
 		UpdatedAt:   issue.GetUpdatedAt().Time,
 		Fields: map[string]any{

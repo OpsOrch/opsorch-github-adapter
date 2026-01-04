@@ -47,6 +47,7 @@ func main() {
 	fmt.Printf("Found %d teams:\n", len(teams))
 	for _, team := range teams {
 		fmt.Printf("  - ID: %s, Name: %s, Parent: %s\n", team.ID, team.Name, team.Parent)
+		fmt.Printf("    URL: %s\n", team.URL)
 		fmt.Printf("    Tags: %v\n", team.Tags)
 	}
 
@@ -67,6 +68,7 @@ func main() {
 	fmt.Printf("  ID: %s\n", team.ID)
 	fmt.Printf("  Name: %s\n", team.Name)
 	fmt.Printf("  Parent: %s\n", team.Parent)
+	fmt.Printf("  URL: %s\n", team.URL)
 	fmt.Printf("  Tags: %v\n", team.Tags)
 	fmt.Printf("  Metadata keys: %v\n", getKeys(team.Metadata))
 
